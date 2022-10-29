@@ -61,7 +61,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Notification of workflow status to discord
-        uses: fateyan/action-discord-notifier@v1
+        uses: johnnyhuy/actions-discord-git-webhook@main
         with:
-          webhook: ${{ secrets.WEBHOOK_URL }}
-          message-title: New Commits Pushed
+          webhook_url: ${{ secrets.WEBHOOK_URL }}
+          hide_links: true
+          censor_username: true
+          repo_name: cicd_pokedex
