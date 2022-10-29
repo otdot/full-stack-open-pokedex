@@ -30,40 +30,49 @@ jobs:
           command: npm run test:e2e
           start: npm run start-prod
           wait-on: http://localhost:5001
-      # - name: Deployment
-      #   id: deployment
-      #   if: ${{ github.event_name == 'push' }}
-      #   uses: akhileshns/heroku-deploy@v3.12.12
-      #   with:
-      #     heroku_api_key: ${{secrets.HEROKU_TOKEN}}
-      #     heroku_app_name: "pokemon-app-heroku"
-      #     heroku_email: ottojuho@hotmail.fi
-      #     healthcheck: https://pokemon-app-heroku.herokuapp.com/health
-      #     checkstring: "ok"
-      #     delay: 5
-      #     rollbackonhealthcheckfailed: true
+      - name: Deployment
+        id: deployment
+        if: ${{ github.event_name == 'push' }}
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_TOKEN}}
+          heroku_app_name: "pokemon-app-heroku"
+          heroku_email: ottojuho@hotmail.fi
+          healthcheck: https://pokemon-app-heroku.herokuapp.com/health
+          checkstring: "ok"
+          delay: 5
+          rollbackonhealthcheckfailed: true
   tag_release:
     needs: [simple_deployment_pipeline]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - name: Add version and push tag
-        uses: anothrNick/github-tag-action@1.36.0
         if: ${{ success() && contains(join(toJson(github.event.commits.*.message), ' '), '#skip') != true }}
+        uses: anothrNick/github-tag-action@1.36.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           WITH_V: true
           RELEASE_BRANCHES: master
-  github_notifier:
-    needs: [tag_release]
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Notification of workflow status to discord
-        uses: johnnyhuy/actions-discord-git-webhook@main
-        with:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
-          hide_links: true
-          censor_username: true
-          repo_name: cicd_pokedex
+  # github_notifier:
+  #   needs: [tag_release]
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Notification of workflow status to discord on success
+  #       if: ${{ success() }}
+  #       uses: johnnyhuy/actions-discord-git-webhook@main
+  #       with:
+  #         webhook_url: ${{ secrets.WEBHOOK_URL }}
+  #         hide_links: true
+  #         censor_username: true
+  #         repo_name: cicd_pokedex
+  #     - name: Send Discord notification
+  #       if: ${{ failure() }}
+  #       uses: stegzilla/discord-notify@v2
+  #       with:
+  #         webhook_url: ${{ secrets.WEBHOOK_URL }}
+  #         title: Merge failure
+  #         message: "**${{ github.event.pull_request.title }}**\n**Creator:** ${{ github.event.pull_request.user.login }}\n${{ github.event.pull_request.html_url }}"
+  #         include_image: false
